@@ -1,6 +1,6 @@
-# MiniBrain Remote
+# MiniBrain
 
-> Cross-model memory connector — remote MCP server edition.
+> Cross-model memory connector — one product with two deployment modes.
 
 English | [简体中文](./README.zh.md)
 
@@ -11,11 +11,28 @@ English | [简体中文](./README.zh.md)
 
 ## 🎯 Positioning
 
-**MiniBrain Remote is a cross-model memory connector delivered as a remote MCP server.**
+**MiniBrain is a cross-model memory connector delivered through MCP.**
 
 Its goal is simple: your memory should stay with you, not with a single model or client.
 
 When you switch from Claude to GPT (or any other MCP-compatible client), context continuity should still hold.
+
+## 🧭 One Product, Two Modes
+
+MiniBrain is one product with one memory core, available in two deployment modes:
+
+- **Local Mode (PC single-machine)**: run via stdio for personal workflows.
+- **Remote Mode (network-enabled)**: run via HTTP/SSE for multi-device or multi-agent collaboration.
+
+Both modes share the same memory model, retrieval logic, and MCP tool interface.  
+The difference is the transport layer, not the product itself.
+
+| If you need... | Choose... |
+|---|---|
+| Fast personal use on one computer | **Local Mode (`serve`)** |
+| Shared memory across devices or teammates | **Remote Mode (`serve-remote`)** |
+| Lowest setup complexity | **Local Mode** |
+| Public endpoint / API-key protected access | **Remote Mode** |
 
 ```
 Claude ──MCP──► MiniBrain Remote ◄──MCP── GPT-4
@@ -311,7 +328,6 @@ minibrain doctor
 
 ---
 
-## 🤝 贡献
 ## 🤝 Contributing
 
 Issues and PRs are welcome.
