@@ -1,46 +1,46 @@
 # MiniBrain Remote
 
-> Cross-model memory connector — remote MCP server edition.
+> 跨模型记忆连接器 - 远程 MCP 服务器版本
 
-English | [简体中文](./README.zh.md)
+[English](./README.md) | 简体中文
 
 [![npm version](https://img.shields.io/badge/version-0.2.0-blue.svg)](https://github.com)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 ---
 
-## 🎯 Positioning
+## 🎯 核心定位
 
-**MiniBrain Remote is an MCP server built for remote access.**
+**MiniBrain Remote 是支持远程连接的 MCP 服务器版本。**
 
-Switch models without losing memory, and let different AI apps share the same context.
+换模型不丢记忆，不同 AI 共享同一份上下文。
 
 ```
 Claude ──MCP──► MiniBrain Remote ◄──MCP── GPT-4
                     │  (HTTP/SSE)
                     ▼
-               VPS Server
+              VPS 服务器
 ```
 
 ---
 
-## ✨ Features
+## ✨ 特性
 
-| Feature | Description |
+| 特性 | 说明 |
 |------|------|
-| **MCP Native** | Fully aligned with the Model Context Protocol |
-| **Remote Transport** | HTTP/SSE access across devices |
-| **Multi-model Support** | OpenAI / Alibaba Cloud / MiniMax / Baidu / Zhipu |
-| **Unified Memory** | Shared memory across AI systems, seamless model switching |
-| **Hybrid Search** | Vector + keyword + RRF fusion |
-| **Local-first** | Embedded PGlite, no separate DB process required |
-| **API Key Auth** | Protects memory access |
+| **MCP Native** | 严格遵循 Model Context Protocol |
+| **远程传输** | 支持 HTTP/SSE 传输，跨设备访问 |
+| **多模型支持** | OpenAI / 阿里云 / MiniMax / 百度 / 智谱... |
+| **统一记忆** | 所有 AI 共享同一份记忆，切换模型无缝衔接 |
+| **混合搜索** | 向量 + 关键词 + RRF 融合 |
+| **本地优先** | PGlite 嵌入式，无需数据库进程 |
+| **API Key 认证** | 保护你的记忆不被他人访问 |
 
 ---
 
-## 🚀 Quick Start
+## 🚀 快速开始
 
-### Install
+### 安装
 
 ```bash
 git clone https://github.com/yan-auto/MiniBrain.git
@@ -49,24 +49,24 @@ npm install
 npm run build
 ```
 
-### Start Remote Server
+### 启动远程服务器
 
 ```bash
-# Basic
+# 基本用法
 ./dist/cli.js serve-remote --port 3000 --host 0.0.0.0
 
-# With API key (recommended)
+# 带 API Key (推荐)
 ./dist/cli.js serve-remote --port 3000 --host 0.0.0.0 --api-key your-secret-key
 
-# Local only
+# 只监听本地
 ./dist/cli.js serve-remote --port 3000
 ```
 
-### Connect to Server
+### 连接到服务器
 
 #### Claude Desktop
 
-Add this to `claude_desktop_config.json`:
+在 `claude_desktop_config.json` 中添加：
 
 ```json
 {
@@ -82,15 +82,15 @@ Add this to `claude_desktop_config.json`:
 }
 ```
 
-#### Other MCP Clients
+#### 其他 MCP 客户端
 
-Connect directly via HTTP:
+使用 HTTP 请求直接连接：
 
 ```bash
-# Health check
+# 健康检查
 curl http://localhost:3000/health
 
-# MCP endpoint (requires Bearer auth)
+# MCP 端点 (需要 Bearer 认证)
 curl -X POST http://localhost:3000/mcp \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer your-secret-key" \
@@ -99,7 +99,7 @@ curl -X POST http://localhost:3000/mcp \
 
 ---
 
-## 🏗️ Architecture
+## 🏗️ 架构
 
 ```
 ┌─────────────────────────────────────┐
@@ -116,7 +116,7 @@ curl -X POST http://localhost:3000/mcp \
 │                 ▼                   │
 │        ┌────────────────┐          │
 │        │  Operations    │           │
-│        │ (Operations)   │           │
+│        │   (命令层)     │           │
 │        └────────┬────────┘          │
 │                 │                    │
 │       ┌─────────┴─────────┐        │
@@ -139,61 +139,61 @@ curl -X POST http://localhost:3000/mcp \
 
 ## 📡 API
 
-### Endpoints
+### 端点
 
-| Endpoint | Method | Description |
+| 端点 | 方法 | 说明 |
 |------|------|------|
-| `/health` | GET | Health check |
-| `/mcp` | POST | MCP JSON-RPC request |
+| `/health` | GET | 健康检查 |
+| `/mcp` | POST | MCP JSON-RPC 请求 |
 
-### MCP Tools
+### MCP 工具
 
-| Tool | Description |
+| 工具 | 说明 |
 |------|------|
-| `query` | Natural language query |
-| `get_page` | Get a page |
-| `put_page` | Create/update a page |
-| `list_pages` | List pages |
-| `delete_page` | Delete a page |
+| `query` | 自然语言查询 |
+| `get_page` | 获取页面 |
+| `put_page` | 创建/更新页面 |
+| `list_pages` | 列出页面 |
+| `delete_page` | 删除页面 |
 
 ---
 
-## 🔒 Security
+## 🔒 安全
 
-### API Key Authentication
+### API Key 认证
 
 ```bash
-# Set API key at startup
+# 启动时指定 API Key
 ./dist/cli.js serve-remote --api-key your-secret-key
 
-# Send in client requests
+# 客户端请求时携带
 curl -H "Authorization: Bearer your-secret-key" http://localhost:3000/mcp
 ```
 
-### Network Security Recommendations
+### 网络安全建议
 
-1. **Expose only required ports** - open only port 3000 in firewall
-2. **Use HTTPS** - use Nginx/Caddy reverse proxy in production
-3. **Rotate keys regularly** - suggested monthly rotation
+1. **只暴露必要端口** - VPS 防火墙只开放 3000 端口
+2. **使用 HTTPS** - 生产环境建议用 Nginx/Caddy 反向代理
+3. **定期更换 Key** - 建议每月更换一次 API Key
 
 ---
 
-## 🚢 Deployment
+## 🚢 部署
 
-### VPS Deployment
+### VPS 部署
 
 ```bash
-# 1. Install Node.js 20+
+# 1. 安装 Node.js 20+
 curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
 sudo apt-get install -y nodejs
 
-# 2. Clone project
+# 2. 克隆项目
 git clone https://github.com/yan-auto/MiniBrain.git
 cd MiniBrain
 npm install
 npm run build
 
-# 3. Configure systemd service
+# 3. 配置 systemd 服务
 sudo tee /etc/systemd/system/minibrain.service > /dev/null <<EOF
 [Unit]
 Description=MiniBrain Remote MCP Server
@@ -210,13 +210,13 @@ Restart=always
 WantedBy=multi-user.target
 EOF
 
-# 4. Start service
+# 4. 启动服务
 sudo systemctl daemon-reload
 sudo systemctl enable minibrain
 sudo systemctl start minibrain
 ```
 
-### HTTPS Config (Nginx)
+### HTTPS 配置 (Nginx)
 
 ```nginx
 server {
@@ -238,38 +238,37 @@ server {
 
 ---
 
-## 📦 CLI Commands
+## 📦 CLI 命令
 
 ```bash
-# Initialize
+# 初始化
 minibrain init
 
-# Start local MCP server (stdio)
+# 启动本地 MCP 服务器 (stdio)
 minibrain serve
 
-# Start remote MCP server (HTTP)
+# 启动远程 MCP 服务器 (HTTP)
 minibrain serve-remote --port 3000 --host 0.0.0.0 --api-key secret
 
-# Page operations
-minibrain put <slug> --title "Title" --content "Content"
+# 页面操作
+minibrain put <slug> --title "标题" --content "内容"
 minibrain get <slug>
 minibrain list
 minibrain delete <slug>
 
-# Search
-minibrain query "query text"
-minibrain search "keyword"
+# 搜索
+minibrain query "查询内容"
+minibrain search "关键词"
 
-# Health check
+# 健康检查
 minibrain doctor
 ```
 
 ---
 
 ## 🤝 贡献
-## 🤝 Contributing
 
-Issues and PRs are welcome.
+欢迎提交 Issue 和 PR！
 
 ---
 
@@ -279,4 +278,4 @@ MIT
 
 ---
 
-*Remember everything. Switch models without losing memory.*
+*让 AI 记住一切，切换模型不丢记忆。*
