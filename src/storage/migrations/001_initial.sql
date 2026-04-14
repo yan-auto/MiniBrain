@@ -1,0 +1,2 @@
+-- MiniBrain 初始Schema v1
+-- 应用此迁移将数据库初始化
