@@ -11,9 +11,11 @@ English | [简体中文](./README.zh.md)
 
 ## 🎯 Positioning
 
-**MiniBrain Remote is an MCP server built for remote access.**
+**MiniBrain Remote is a cross-model memory connector delivered as a remote MCP server.**
 
-Switch models without losing memory, and let different AI apps share the same context.
+Its goal is simple: your memory should stay with you, not with a single model or client.
+
+When you switch from Claude to GPT (or any other MCP-compatible client), context continuity should still hold.
 
 ```
 Claude ──MCP──► MiniBrain Remote ◄──MCP── GPT-4
@@ -21,6 +23,50 @@ Claude ──MCP──► MiniBrain Remote ◄──MCP── GPT-4
                     ▼
                VPS Server
 ```
+
+---
+
+## 🧩 The Problem It Solves
+
+Today, most AI workflows suffer from four recurring issues:
+
+1. **Memory fragmentation** — each AI client stores context in isolation.
+2. **Model lock-in** — once memory lives in one stack, switching tools loses history.
+3. **Context reset costs** — users repeatedly re-explain the same background.
+4. **Inconsistent retrieval quality** — pure keyword or pure vector search alone misses intent.
+
+The result is wasted time, unstable output quality, and weak long-term collaboration between human and AI.
+
+## 🔍 Why Traditional Approaches Fall Short
+
+Classic knowledge-base tools are usually built for documents, not for **shared AI memory across model boundaries**.
+
+They often provide storage, but not a protocol-native interface that every MCP client can consume consistently.
+
+MiniBrain Remote focuses on this exact gap: a protocol-first memory layer for multi-model AI systems.
+
+## ⚙️ How MiniBrain Remote Solves It
+
+MiniBrain Remote works as a layered pipeline:
+
+1. **Standardized access (MCP Native)**  
+   Memory operations are exposed through MCP tools, so multiple AI clients can read/write the same memory with a consistent contract.
+
+2. **Durable storage with deployment flexibility**  
+   Use **PGlite** for local-first setups and **PostgreSQL** for production-style environments.
+
+3. **Hybrid retrieval for higher recall quality**  
+   Combine vector search, keyword search, and **RRF fusion** to reduce blind spots from any single retrieval method.
+
+4. **Secure remote connectivity**  
+   Serve memory via HTTP/SSE with API key authentication, enabling cross-device and remote agent access.
+
+## ✅ What You Get in Practice
+
+- Keep long-term context when switching models.
+- Let multiple agents share one memory layer.
+- Reduce repetitive prompting and onboarding overhead.
+- Build memory-enabled AI products on a protocol-aligned foundation.
 
 ---
 
@@ -116,7 +162,6 @@ curl -X POST http://localhost:3000/mcp \
 │                 ▼                   │
 │        ┌────────────────┐          │
 │        │  Operations    │           │
-│        │ (Operations)   │           │
 │        └────────┬────────┘          │
 │                 │                    │
 │       ┌─────────┴─────────┐        │
