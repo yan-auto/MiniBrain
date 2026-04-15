@@ -101,6 +101,21 @@ MiniBrain Remote 用分层方式把问题拆开处理：
 
 ---
 
+## 🖥️ 支持的平台
+
+MiniBrain 目前已经可以接入这些常见工具：
+
+| 平台 | 类型 | MCP |
+| --------------- | ----- | --- |
+| Claude Desktop | 桌面应用 | ✅ |
+| Claude Code | 命令行工具 | ✅ |
+| Cursor | IDE | ✅ |
+| VS Code | 编辑器插件 | ✅ |
+
+除了 MCP 方式之外，远程模式还支持 REST API，方便任何 HTTP 客户端接入。
+
+---
+
 ## 🚀 快速开始
 
 ### 安装
@@ -118,12 +133,20 @@ npm run build
 # 基本用法
 ./dist/cli.js serve-remote --port 3000 --host 0.0.0.0
 
+# 同时启动 REST API（新增）
+./dist/cli.js serve-remote --port 3000 --host 0.0.0.0 --api
+
 # 带 API Key (推荐)
-./dist/cli.js serve-remote --port 3000 --host 0.0.0.0 --api-key your-secret-key
+./dist/cli.js serve-remote --port 3000 --host 0.0.0.0 --api-key your-secret-key --api
 
 # 只监听本地
-./dist/cli.js serve-remote --port 3000
+./dist/cli.js serve-remote --port 3000 --host 127.0.0.1 --api
 ```
+
+启用 `--api` 后：
+
+- **MCP 服务**：`http://127.0.0.1:3000/mcp`
+- **REST API**：`http://127.0.0.1:3001/...`
 
 ### 连接到服务器
 
@@ -158,6 +181,26 @@ curl -X POST http://localhost:3000/mcp \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer your-secret-key" \
   -d '{"jsonrpc": "2.0", "id": 1, "method": "tools/list"}'
+```
+
+#### REST API 客户端
+
+如果启动时带了 `--api`，可以直接用 HTTP 访问：
+
+```bash
+# 健康检查
+curl http://127.0.0.1:3001/health
+
+# 查看所有记忆
+curl http://127.0.0.1:3001/api/memories
+
+# 搜索记忆
+curl "http://127.0.0.1:3001/api/search?q=本地"
+
+# 新建记忆
+curl -X POST http://127.0.0.1:3001/api/memories \
+  -H "Content-Type: application/json" \
+  -d '{"title":"测试","content":"这是测试内容","type":"note"}'
 ```
 
 ---
