@@ -101,6 +101,20 @@ MiniBrain Remote works as a layered pipeline:
 
 ---
 
+## 🖥️ Supported Platforms
+
+MiniBrain integrates seamlessly with your favorite AI tools and editors:
+
+| Platform | Type | MCP Support |
+|----------|------|---|
+| Claude Desktop | Desktop App | ✅ |
+| Claude Code | CLI Tool | ✅ |
+| Cursor | IDE | ✅ |
+| VS Code | Editor Plugin | ✅ |
+
+Additional integration via REST API available for any HTTP client.
+
+
 ## 🚀 Quick Start
 
 ### Install
