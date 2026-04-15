@@ -50,8 +50,16 @@ export class PGliteEngine implements BrainEngine {
   }
 
   async runMigration(sql: string, version: number): Promise<void> {
-    // PGlite doesn't support multiple SQL statements in one query
-    const statements = sql.split(';').filter(s => s.trim() && !s.trim().startsWith('--'));
+    // PGlite doesn't support multiple SQL statements in one query.
+    // Strip SQL comment lines first so the first CREATE statement is not skipped.
+    const cleanedSql = sql
+      .split('\n')
+      .filter(line => !line.trim().startsWith('--'))
+      .join('\n');
+    const statements = cleanedSql
+      .split(';')
+      .map(s => s.trim())
+      .filter(Boolean);
     for (const stmt of statements) {
       try {
         await this.db!.query(stmt);

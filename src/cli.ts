@@ -1,5 +1,7 @@
 #!/usr/bin/env node
 
+import 'dotenv/config';
+
 import { createEngine } from './engine/factory.js';
 import { loadConfig, saveConfig, getConfigDir } from './config/index.js';
 import { logger } from './utils/logger.js';
@@ -8,6 +10,7 @@ import { operations, buildContext } from './operations/index.js';
 import { createEmbeddingProvider } from './embedding/index.js';
 import { startServer } from './mcp/server.js';
 import { startRemoteServer } from './mcp/server-remote.js';
+import { startApiServer } from './api/server.js';
 import fs from 'fs';
 import path from 'path';
 
@@ -44,6 +47,7 @@ MiniBrain Remote CLI - 跨模型记忆连接器 (远程服务版)
   --port <端口>          HTTP端口 (默认: 3000)
   --host <地址>          监听地址 (默认: 127.0.0.1)
   --api-key <密钥>       API密钥 (可选，推荐设置)
+  --api                  同时启动 REST API 服务器 (端口+1)
 
 示例:
   minibrain init
@@ -61,8 +65,41 @@ async function init() {
   if (!fs.existsSync(configDir)) {
     fs.mkdirSync(configDir, { recursive: true });
   }
+
   const config = loadConfig();
   saveConfig(config);
+
+  // Ensure local data directory exists for pglite mode
+  if (!fs.existsSync(config.dataDir)) {
+    fs.mkdirSync(config.dataDir, { recursive: true });
+  }
+
+  const engine = createEngine({
+    type: config.engine,
+    connectionString: config.engine === 'postgres'
+      ? (process.env.DATABASE_URL || '')
+      : path.join(config.dataDir, 'brain.db'),
+  });
+
+  try {
+    await engine.connect();
+    const currentVersion = await engine.getSchemaVersion();
+
+    if (currentVersion === null) {
+      const schemaPath = config.engine === 'postgres'
+        ? path.join(process.cwd(), 'src', 'storage', 'schema.sql')
+        : path.join(process.cwd(), 'src', 'storage', 'schema-pglite.sql');
+
+      const schemaSql = fs.readFileSync(schemaPath, 'utf-8');
+      await engine.runMigration(schemaSql, 1);
+      logger.info(`Schema initialized (v1) using ${config.engine}`);
+    } else {
+      logger.info(`Schema already initialized (v${currentVersion})`);
+    }
+  } finally {
+    await engine.disconnect();
+  }
+
   logger.info(`Initialized at ${configDir}`);
 }
 
@@ -102,6 +139,7 @@ async function serveRemote(args: string[]) {
   let port = 3000;
   let host = '127.0.0.1';
   let apiKey: string | undefined;
+  let enableApi = false;
 
   // Parse args
   for (let i = 0; i < args.length; i++) {
@@ -115,15 +153,23 @@ async function serveRemote(args: string[]) {
       case '--api-key':
         apiKey = args[++i];
         break;
+      case '--api':
+        enableApi = true;
+        break;
     }
   }
 
-  console.log(`Starting MiniBrain Remote MCP Server...`);
+  console.log(`Starting MiniBrain Remote...`);
   console.log(`Port: ${port}`);
   console.log(`Host: ${host}`);
   console.log(`API Key: ${apiKey ? 'enabled' : 'disabled'}`);
+  console.log(`REST API: ${enableApi ? 'enabled' : 'disabled'}`);
 
   await startRemoteServer({ port, host, apiKey });
+
+  if (enableApi) {
+    await startApiServer({ port: port + 1, host, apiKey });
+  }
 
   // Keep the process running
   console.log('\nServer is running. Press Ctrl+C to stop.');

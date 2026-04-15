@@ -46,7 +46,7 @@ export class PostgresEngine implements BrainEngine {
 
   async runMigration(sql: string, version: number): Promise<void> {
     await this.sql.unsafe(sql);
-    await this.sql`INSERT INTO schema_version (version) VALUES (${version})`;
+    await this.sql`INSERT INTO schema_version (version) VALUES (${version}) ON CONFLICT DO NOTHING`;
     logger.info(`Migration ${version} applied`);
   }
 

@@ -5,10 +5,24 @@ import { logger } from '../utils/logger.js';
 
 const SCHEMA_VERSION = 1;
 
+function getHomeDir(): string {
+  return process.env.USERPROFILE || process.env.HOME || '~';
+}
+
+function expandHomeDir(inputPath: string): string {
+  if (inputPath === '~') {
+    return getHomeDir();
+  }
+  if (inputPath.startsWith('~/') || inputPath.startsWith('~\\')) {
+    return path.join(getHomeDir(), inputPath.slice(2));
+  }
+  return inputPath;
+}
+
 const DEFAULT_CONFIG: BrainConfig = {
   version: SCHEMA_VERSION,
-  dataDir: '~/.minibrain/data',
-  engine: 'postgres',
+  dataDir: path.join(getHomeDir(), '.minibrain', 'data'),
+  engine: 'pglite',
   embedding: {
     provider: 'dashscope',
     model: 'text-embedding-v3',
@@ -33,7 +47,8 @@ const DEFAULT_CONFIG: BrainConfig = {
 };
 
 export function getConfigDir(): string {
-  return process.env.MINIBRAIN_DIR || path.join(process.env.HOME || '~', '.minibrain');
+  const configured = process.env.MINIBRAIN_DIR || path.join(getHomeDir(), '.minibrain');
+  return expandHomeDir(configured);
 }
 
 export function getConfigPath(): string {
@@ -94,9 +109,14 @@ function validateConfig(config: unknown): asserts config is BrainConfig {
 }
 
 function mergeConfig(defaults: BrainConfig, config: Partial<BrainConfig>): BrainConfig {
+  const resolvedDataDir = config.dataDir
+    ? expandHomeDir(config.dataDir)
+    : defaults.dataDir;
+
   return {
     ...defaults,
     ...config,
+    dataDir: resolvedDataDir,
     embedding: {
       ...defaults.embedding,
       ...(config.embedding || {}),
