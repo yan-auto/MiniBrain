@@ -112,25 +112,70 @@ npm install
 npm run build
 ```
 
-### Start Remote Server
+### Local Mode (Single Machine)
+
+For personal workflows on one computer:
 
 ```bash
-# Basic
+# Initialize (auto-runs schema migrations)
+./dist/cli.js init
+
+# Start local MCP server (stdio)
+./dist/cli.js serve
+
+# Add to Claude Desktop config
+# Edit: ~/.claude/config.json or %APPDATA%\Claude\claude_desktop_config.json
+{
+  "mcpServers": {
+    "minibrain": {
+      "command": "node",
+      "args": ["/path/to/minibrain/dist/cli.js", "serve"]
+    }
+  }
+}
+```
+
+### Remote Mode (Network-Enabled)
+
+For multi-device, multi-agent, or API access:
+
+```bash
+# Basic MCP-only
 ./dist/cli.js serve-remote --port 3000 --host 0.0.0.0
 
-# With API key (recommended)
-./dist/cli.js serve-remote --port 3000 --host 0.0.0.0 --api-key your-secret-key
+# With REST API layer (NEW: dual-interface support)
+./dist/cli.js serve-remote --port 3000 --host 0.0.0.0 --api
 
-# Local only
-./dist/cli.js serve-remote --port 3000
+# With API key authentication
+./dist/cli.js serve-remote --port 3000 --host 0.0.0.0 --api-key your-secret-key --api
+
+# Local development
+./dist/cli.js serve-remote --port 3000 --host 127.0.0.1 --api
 ```
+
+When `--api` is enabled:
+- **MCP Server**: `http://127.0.0.1:3000/mcp` (for Claude, GPT, etc.)
+- **REST API**: `http://127.0.0.1:3001/...` (for HTTP clients, custom integrations)
 
 ### Connect to Server
 
-#### Claude Desktop
+#### Claude Desktop (MCP Mode)
 
 Add this to `claude_desktop_config.json`:
 
+**Local mode (stdio):**
+```json
+{
+  "mcpServers": {
+    "minibrain": {
+      "command": "node",
+      "args": ["/path/to/dist/cli.js", "serve"]
+    }
+  }
+}
+```
+
+**Remote mode (HTTP):**
 ```json
 {
   "mcpServers": {
@@ -145,15 +190,32 @@ Add this to `claude_desktop_config.json`:
 }
 ```
 
-#### Other MCP Clients
+#### REST API Clients
 
-Connect directly via HTTP:
+If started with `--api` flag, use HTTP directly (port 3001 by default):
 
 ```bash
 # Health check
-curl http://localhost:3000/health
+curl http://127.0.0.1:3001/health
 
-# MCP endpoint (requires Bearer auth)
+# List memories
+curl http://127.0.0.1:3001/api/memories
+
+# Search
+curl "http://127.0.0.1:3001/api/search?q=keyword"
+
+# Create memory
+curl -X POST http://127.0.0.1:3001/api/memories \
+  -H "Content-Type: application/json" \
+  -d '{"title":"Note","content":"Content","type":"note"}'
+```
+
+#### Other MCP Clients
+
+Connect via HTTP/SSE:
+
+```bash
+# MCP endpoint (requires Bearer auth if apikey is set)
 curl -X POST http://localhost:3000/mcp \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer your-secret-key" \
@@ -201,22 +263,80 @@ curl -X POST http://localhost:3000/mcp \
 
 ## 📡 API
 
-### Endpoints
+### MCP Endpoints (All Modes)
 
 | Endpoint | Method | Description |
 |------|------|------|
 | `/health` | GET | Health check |
-| `/mcp` | POST | MCP JSON-RPC request |
+| `/mcp` | POST | MCP JSON-RPC request (streaming) |
 
 ### MCP Tools
 
 | Tool | Description |
 |------|------|
-| `query` | Natural language query |
-| `get_page` | Get a page |
-| `put_page` | Create/update a page |
-| `list_pages` | List pages |
+| `query` | Natural language query with vector + keyword hybrid search |
+| `get_page` | Get a single page by slug |
+| `put_page` | Create/update a page (auto-generates embeddings) |
+| `list_pages` | List all pages |
 | `delete_page` | Delete a page |
+| `embed` | Backfill missing vector embeddings (one-time operation) |
+
+### REST API Endpoints (Remote Mode with `--api`)
+
+When started with `--api` flag, MiniBrain exposes a REST layer on `port + 1` (default: 3001):
+
+#### Health Check
+```bash
+GET /health
+# Response: {"status":"ok","timestamp":"2026-04-15T12:09:10.794Z"}
+```
+
+#### List All Memories
+```bash
+GET /api/memories
+# Response: [{"slug":"...","title":"...","content":"...","type":"note","createdAt":"..."}]
+```
+
+#### Search Memories
+```bash
+GET /api/search?q=keyword
+# Response: [{"slug":"...","title":"...","score":0.95}]
+```
+
+#### Get Single Memory
+```bash
+GET /api/memories/:slug
+# Response: {"slug":"...","title":"...","content":"...","type":"note"}
+```
+
+#### Create Memory
+```bash
+POST /api/memories
+Content-Type: application/json
+
+{"title":"My Note","content":"Content here","type":"note"}
+# Response: {"slug":"my-note","title":"My Note",...}
+```
+
+#### Delete Memory
+```bash
+DELETE /api/memories/:slug
+# Response: {"success":true}
+```
+
+**Example cURL calls:**
+```bash
+# Search
+curl "http://127.0.0.1:3001/api/search?q=本地"
+
+# Create memory
+curl -X POST http://127.0.0.1:3001/api/memories \
+  -H "Content-Type: application/json" \
+  -d '{"title":"Test","content":"This is a test","type":"note"}'
+
+# Get specific memory
+curl http://127.0.0.1:3001/api/memories/test
+```
 
 ---
 
@@ -303,14 +423,16 @@ server {
 ## 📦 CLI Commands
 
 ```bash
-# Initialize
+# Initialize (auto-runs schema migrations for local setup)
 minibrain init
 
-# Start local MCP server (stdio)
+# Local mode: Start stdio MCP server
 minibrain serve
 
-# Start remote MCP server (HTTP)
-minibrain serve-remote --port 3000 --host 0.0.0.0 --api-key secret
+# Remote mode: Start HTTP/SSE MCP server + optional REST API
+minibrain serve-remote --port 3000 --host 0.0.0.0
+minibrain serve-remote --port 3000 --host 0.0.0.0 --api              # Enable REST API layer
+minibrain serve-remote --port 3000 --host 0.0.0.0 --api-key secret   # With auth
 
 # Page operations
 minibrain put <slug> --title "Title" --content "Content"
@@ -318,12 +440,14 @@ minibrain get <slug>
 minibrain list
 minibrain delete <slug>
 
-# Search
-minibrain query "query text"
-minibrain search "keyword"
+# Search & embedding
+minibrain query "query text"          # Hybrid keyword + vector search
+minibrain search "keyword"             # Keyword search only
+minibrain embed                        # Backfill missing vector embeddings (runs once
+ after put operations)
 
-# Health check
-minibrain doctor
+# Health check & diagnostics
+minibrain doctor                       # Show page count, chunk count, vector coverage
 ```
 
 ---
